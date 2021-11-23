@@ -27,7 +27,7 @@ def nearest_non_terminal(CNF, input1, input2 = None):
         product = "{} {}".format(input1, input2)
         
     for key, value in CNF.items():
-            if (value == product):
+            if (product in value):
                 return key     
     return None
 
@@ -79,14 +79,14 @@ def cyk_parse(text,CNF):
 # TEST
 CNF = {
     'S': ('NP VP'),
-    'NP': ('Det N'),
+    'NP': ('Det N', 'N'),
     'VP': ('V NP'),
-    'Det': ('the'),
+    'Det': ('the','a'),
     'N': ('cat'),
     'V': ('chased')
 }
 
-text = ['the', 'cat', 'chased', 'the', 'cat']
+text = ['the', 'cat', 'chased', 'a', 'cat']
 
 print(cyk_parse(text, CNF))
 
