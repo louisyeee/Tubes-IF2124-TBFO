@@ -53,6 +53,7 @@ rules = [
 ('[#]', 'COMMENT'),
 ('\'\'\'', 'COMMENT_MULTILINE'),
 ('\'', 'QUOTE'),
+('"', 'DQUOTE')
 ]
 
 lx = Lexer(rules, skip_whitespace=True)
