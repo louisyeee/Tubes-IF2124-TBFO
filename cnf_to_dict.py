@@ -1,5 +1,3 @@
-from grammar_conv import *
-
 def cnf_file_to_dict(file):
     """
     Takes a CNF file and returns a dictionary of clauses.
