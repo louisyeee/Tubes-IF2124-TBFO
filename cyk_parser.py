@@ -1,6 +1,4 @@
-from pprint import pprint
 import numpy as np
-from pandas import *
 
 
 def nearest_non_terminal(CNF, input1, input2 = None):

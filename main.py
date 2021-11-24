@@ -1,8 +1,8 @@
 from cyk_parser import cyk_parser
-# import argparse
+from os import system
 from cnf_to_dict import cnf_file_to_dict
 from lexer import *
-
+system('cls')
 rules = [
 (r'\n', 'NEWLINE'),
 ('\\n', 'NEWLINE'),
