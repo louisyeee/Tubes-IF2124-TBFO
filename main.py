@@ -80,9 +80,14 @@ CNF = cnf_file_to_dict("grammars/cnf.txt")
 i = 1
 for x in output:
     x = x.strip().split(' ')
-    print(x)
+    try:
+        x.remove('')
+    except ValueError:
+        pass  # do nothing!
     hasil_cyk = cyk_parser(x, CNF)
-    print(hasil_cyk[0])
+    print("line {}:".format(i), end=" ")
     if (hasil_cyk[0] == False):
-        print("Error in line {}".format(i))
+        print("Syntax error")
+    else:
+        print("Accepted")
     i += 1

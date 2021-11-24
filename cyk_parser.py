@@ -1,32 +1,8 @@
 from pprint import pprint
 import numpy as np
-from tabulate import tabulate
 from pandas import *
 
-'''
-Asumsi:
-- Text dalam bentuk array
-- CNF dalam bentuk dictionary
-'''
 
-def beautiful_print(matrix):
-    headers = [f'col{i}' for i in range(len(matrix))]
-
-    table = tabulate(matrix, headers, tablefmt="fancy_grid")
-
-    print(table)
-
-def is_product(CNF, parent,  input1, input2 = None):
-    if (input2 == None):
-        return CNF[parent] == input1 
-    else:
-        return CNF[parent] == (input1, input2)
-
-def find_first_not_null_left_of_element(matrix, row, col):
-    for i in range(col, 0, -1):
-        if (matrix[row][i] != 'NULL'):
-            return matrix[row][i]
-    return None
 def nearest_non_terminal(CNF, input1, input2 = None):
     hasil = []
     if (input2 == None):
@@ -60,7 +36,7 @@ def is_grammar_fulfilled_in_cyk_matrix(start_state, cyk_matrix, CNF = None):
 
 
 
-def process_diagonal_matix_from_right_to_left_2(CNF, matrix, diagonalKe):
+def process_diagonal_matix_from_right_to_left(CNF, matrix, diagonalKe):
     #handling diagonal pertama
 
     #handling diagonal rekurens
@@ -116,24 +92,9 @@ def cyk_parser(text,CNF):
 
     # ITERASI DIAGONAL SAMPAI ATAS
     for diagonalKe in range(1, word_length-1):
-        process_diagonal_matix_from_right_to_left_2(CNF, cyk_matrix, diagonalKe)
+        process_diagonal_matix_from_right_to_left(CNF, cyk_matrix, diagonalKe)
     
     return [is_grammar_fulfilled_in_cyk_matrix('START', cyk_matrix, CNF = CNF), cyk_matrix]
 
 
-
-
-# # TEST
-# CNF = {
-#     'S': ('NP VP'),
-#     'NP': ('Det N', 'N'),
-#     'VP': ('V NP'),
-#     'Det': ('the','a'),
-#     'N': ('cat'),
-#     'V': ('chased')
-# }
-
-# text = ['the', 'cat', 'a', 'cat']
-
-# print(cyk_parser(text, CNF))
 
