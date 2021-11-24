@@ -1,91 +1,204 @@
-# Global dictionary used for storing the rules.
-from os import read
+"""
+Kathryn Nichols
+Stefan Behr
+LING 571
+Project 1
 
+This program reads in a context free grammar at arg 1 and outputs the 
+grammar in Chomsky Normal Form to the file at arg 2. Comments and empty
+lines are eliminated from the file. Assumes the form of the input is 
+line-delimited rules, with LHS and RHS separated by ->, and multiple RHS 
+productions separated by | . Terminals should be denoted with straight 
+apostrophes on either side. Each line of comment should be preceded
+by #. The first LHS symbol in the file is treated as the initial symbol.
+Input that does not follow this format may fail to output an
+equivalent CNF file.
 
-RULE_DICT = {}
+"""
 
+import sys
 
-def read_grammar(grammar_file):
-    """
-    Reads in the given grammar file and splits it into separate lists for each rule.
-    :param grammar_file: the grammar file to read in.
-    :return: the list of rules.
-    """
-    with open(grammar_file) as cfg:
-        lines = cfg.readlines()
-    return [x.replace("->", "").split() for x in lines]
+rule_map = {}       # stores rules
 
+# Returns a list of terminals and their
+# indices in the given rule
+def find_terminals(rule):
+    terminals = []
+    indices = []
+    j = 0
+    for item in rule:
+        if item[0] == "'":
+            terminals.append(item)
+            indices.append(j)
+        j += 1
+    
+    return terminals, indices
 
+# Returns a string representation
+# of the given rule
+def stringify(rule):
+    string = rule[0] + ' ->'
+    for item in rule[1:]:
+        string += ' ' + item
+    string += '\n'
+    
+    return string
+
+# Adds a rule to the dictionary of rules
 def add_rule(rule):
-    """
-    Adds a rule to the dictionary of lists of rules.
-    :param rule: the rule to add to the dict.
-    """
-    global RULE_DICT
+    
+    global rule_map
+    
+    if rule[0] not in rule_map:
+        rule_map[rule[0]] = []
+    rule_map[rule[0]].append(rule[1:])
 
-    if rule[0] not in RULE_DICT:
-        RULE_DICT[rule[0]] = []
-    RULE_DICT[rule[0]].append(rule[1:])
+# Replaces the terminals in the given
+# rule with new nonterminals. Adds
+# new rules to the output, returns
+# altered rule
+def replace_terminals(rule, terminals, indices, i):
+    
+    string = ''
+    
+    for j in range(len(indices)):
+        new_node = 'X' + str(i)
+        rule[indices[j]] = new_node
+        string += stringify([new_node] + [terminals[j]])
+    
+    return string, rule
 
+# Replaces first two elements in given
+# rule with a new nonterminal. Adds
+# new rule to the output, returns
+# altered rule
+def replace_long(rule, i):
+    
+    new_node = 'X' + str(i)
+    string = stringify([new_node] + rule[1:3])
+    rule = [rule[0]] + [new_node] + rule[3:]
+    
+    return string, rule
 
-def convert_grammar(grammar):
-    """
-        Converts a context-free grammar in the form of
+# Converts long and hybrid productions to
+# CNF form, adds string to output
+def convert_long_and_hybrid(filename):
+    
+    output = ''
+    reserves = []
+    i = 1
+    top = ''
+    tops = ''
+    first = True
+    
+    with open(filename) as f:
+        while True:
+            line = f.readline()
+            if line == '':
+                break
+            line = line.strip()
+            
+            # do not process commented or empty lines
+            if line != '' and line[0] != '#':
+                line = line.split('->')
+                lhs = line[0].strip()
+                
+                # store initial symbol
+                if first:
+                    top = lhs
+                    first = False
+                    
+                rhs = line[1:][0].strip().split('|')
+                
+                for item in rhs:
+                    rule = [lhs] + item.split()
+                    skip = False
+                    
+                    # reserve unit productions for the end
+                    if len(rule) == 2 and rule[1][0] != "'":
+                        reserves.append(rule)
+                        skip = True
+                    
+                    # not a terminal
+                    elif len(rule) > 2:
+                        
+                        # find hybrid rules
+                        terminals, indices = find_terminals(rule)
+                        if len(terminals) > 0:
+                            string, rule = replace_terminals(rule, \
+                                terminals, indices, i)
+                            if rule[0] == top:
+                                tops += string
+                            else:
+                                output += string
+                            i += 1
+                            
+                        # convert long productions
+                        while len(rule) > 3:
+                            string, rule = replace_long(rule, i)
+                            if rule[0] == top:
+                                tops += string
+                            else:
+                                output += string
+                            i += 1
+                    
+                    add_rule(rule)
+                    
+                    if not skip:    # don't output unit productions:
+                        if rule[0] == top:
+                            tops += stringify(rule)
+                        else:
+                            output += stringify(rule)   # output final rule
+                        
+    return top, tops, output, reserves
 
-        S -> NP VP
-        NP -> Det ADV N
-
-        and so on into a chomsky normal form of that grammar. After the conversion rules have either
-        exactly one terminal symbol or exactly two non terminal symbols on its right hand side.
-
-        Therefore some new non terminal symbols might be created. These non terminal symbols are
-        named like the symbol they replaced with an appended index.
-    :param grammar: the CFG.
-    :return: the given grammar converted into CNF.
-    """
-
-    # Remove all the productions of the type A -> X B C or A -> B a.
-    global RULE_DICT
-    unit_productions, result = [], []
-    res_append = result.append
-    index = 0
-
-    for rule in grammar:
-        new_rules = []
-        if len(rule) == 2 and rule[1][0] != "'":
-            # Rule is in form A -> X, so back it up for later and continue with the next rule.
-            unit_productions.append(rule)
-            add_rule(rule)
-            continue
-        elif len(rule) > 2:
-            # Rule is in form A -> X B C or A -> X a.
-            terminals = [(item, i)
-                         for i, item in enumerate(rule) if item[0] == "'"]
-            if terminals:
-                for item in terminals:
-                    # Create a new non terminal symbol and replace the terminal symbol with it.
-                    # The non terminal symbol derives the replaced terminal symbol.
-                    rule[item[1]] = f"{rule[0]}{str(index)}"
-                    new_rules += [f"{rule[0]}{str(index)}", item[0]]
-                index += 1
-            while len(rule) > 3:
-                new_rules += [f"{rule[0]}{str(index)}", rule[1], rule[2]]
-                rule = [rule[0]] + [f"{rule[0]}{str(index)}"] + rule[3:]
-                index += 1
-        # Adds the modified or unmodified (in case of A -> x i.e.) rules.
-        add_rule(rule)
-        res_append(rule)
-        if new_rules:
-            res_append(new_rules)
-    # Handle the unit productions (A -> X)
-    while unit_productions:
-        rule = unit_productions.pop()
-        if rule[1] in RULE_DICT:
-            for item in RULE_DICT[rule[1]]:
+# Conerts unit productions to CNF form
+# and adds to output string
+def convert_unit(reserves, top):
+    
+    global rule_map
+    
+    output = ''
+    tops = ''
+    
+    # convert unit productions 
+    while len(reserves) > 0:
+        rule = reserves.pop()
+        if rule[1] in rule_map:
+            for item in rule_map[rule[1]]:
                 new_rule = [rule[0]] + item
+                
+                # if not a unit production anymore, output
                 if len(new_rule) > 2 or new_rule[1][0] == "'":
-                    res_append(new_rule)
+                    if new_rule[0] == top:
+                        tops += stringify(new_rule)
+                    else:
+                        output += stringify(new_rule)
+                
+                # still a unit production, recycle
                 else:
-                    unit_productions.append(new_rule)
+                    reserves.append(new_rule)
+                    
                 add_rule(new_rule)
-    return result
+        
+    return tops, output
+
+# Reads in CFG file, converts to Chomsky
+# Normal Form and outputs to file
+def main():
+    
+    if len(sys.argv) < 3:
+        sys.stdout.write('Comverter takes two arguments: \
+            [input_grammar_file] [out_file]\n')
+        sys.exit()
+    
+    top, tops, output, reserves = convert_long_and_hybrid(sys.argv[1])
+    results = convert_unit(reserves, top)
+    tops += results[0]
+    output += results[1]
+    
+    with open(sys.argv[2], 'w') as f:
+        f.write(tops)
+        f.write(output)
+
+main()
