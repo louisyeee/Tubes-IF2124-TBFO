@@ -86,7 +86,7 @@ for x in output:
         pass  # do nothing!
     hasil_cyk = cyk_parser(x, CNF)
     print("line {}:".format(i), end=" ")
-    if (hasil_cyk[0] == False):
+    if (hasil_cyk[0] == False and x != [] and  x[0] != "'COMMENT'" and x[0] != "'COMMENT_MULTILINE'"):
         print("Syntax error")
     else:
         print("Accepted")
